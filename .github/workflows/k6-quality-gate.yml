@@ -1,0 +1,42 @@
+# Quality Gate: runs guard.js on every pull request.
+# Juice Shop is started as a service INSIDE the workflow (no dependency on
+# any public demo instance). K6 points at http://localhost:3000.
+# If a threshold is crossed -> exit code != 0 -> check RED -> PR blocked.
+name: K6 Quality Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/**'
+      - '.github/workflows/k6-quality-gate.yml'
+
+jobs:
+  performance-gate:
+    runs-on: ubuntu-latest
+    services:
+      juice-shop:
+        image: bkimminich/juice-shop:latest
+        ports:
+          - 3000:3000
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for Juice Shop (container has no curl; the runner does)
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000/api/products >/dev/null && echo "ready" && break
+            sleep 2
+          done
+          curl -sf http://localhost:3000/api/products >/dev/null
+
+      - name: Install k6
+        run: |
+          npm install -g k6
+
+      - name: Run K6 guard (blocks PR on threshold failure)
+        run: k6 run scripts/guard.js --base-url http://localhost:3000
+
+# Note: do NOT use --health-cmd with curl on the service, because the
+# health-cmd runs INSIDE the container and the Juice Shop image does not
+# include curl. That is why the wait happens from a runner step instead.
