@@ -33,11 +33,20 @@ jobs:
           curl -sf http://localhost:3000/api/products >/dev/null
 
       - name: Install k6
+        # Official binary from the Grafana k6 releases, installed into
+        # /usr/local/bin (always on the runner's PATH). Pinned to the same
+        # v1 series as the local dev environment for reproducible results.
         run: |
-          npm install -g k6
+          curl -fsSL "https://github.com/grafana/k6/releases/download/v1.7.1/k6-v1.7.1-linux-amd64.tar.gz" -o /tmp/k6.tar.gz
+          tar -xzf /tmp/k6.tar.gz -C /tmp
+          sudo install /tmp/k6-v1.7.1-linux-amd64/k6 /usr/local/bin/k6
+
+      - name: Verify k6 is available
+        run: k6 version
 
       - name: Run K6 guard (blocks PR on threshold failure)
-        run: k6 run scripts/guard.js --base-url http://localhost:3000
+        # k6 v1 has no --base-url flag; the script reads __ENV.BASE_URL.
+        run: BASE_URL=http://localhost:3000 k6 run scripts/guard.js
 
 # Note: do NOT use --health-cmd with curl on the service, because the
 # health-cmd runs INSIDE the container and the Juice Shop image does not
