@@ -9,6 +9,8 @@ on:
     paths:
       - 'scripts/**'
       - '.github/workflows/k6-quality-gate.yml'
+  # Manual trigger
+  workflow_dispatch:
 
 jobs:
   performance-gate:
