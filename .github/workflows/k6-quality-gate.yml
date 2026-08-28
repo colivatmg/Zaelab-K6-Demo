@@ -9,6 +9,7 @@ on:
     paths:
       - 'scripts/**'
       - '.github/workflows/k6-quality-gate.yml'
+      - 'docker-compose.yml'
   # Manual trigger
   workflow_dispatch:
 

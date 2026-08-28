@@ -6,7 +6,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "1"
+          cpus: "3"
     healthcheck:
       # The container is Node-based but does NOT ship curl, so the check uses node
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
